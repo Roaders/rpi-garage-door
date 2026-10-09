@@ -33,13 +33,15 @@ bash <(curl -sL https://raw.githubusercontent.com/Roaders/rpi-garage-door/master
 
 this script:
 
- * Downloads the latest release page
- * uses wget to download the referenced tar
+ * Finds the latest release tar using the GitHub API
+ * downloads it to a temporary folder and checks it is a valid archive
  * stops the `garage-door` service
  * extracts the tar
  * rebuilds epoll (tar is compiled on 64 bit machine, most pis are 32 bit)
  * cleans up downloaded files
- * starts `garage-door` service
+ * starts `garage-door` service (this also happens if extracting or rebuilding fails)
+
+If the release can't be found or the download fails, the script exits before stopping the service.
 
 ### Create Users
 
