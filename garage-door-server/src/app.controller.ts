@@ -1,8 +1,26 @@
-import { Controller, Get, UseGuards, Request as RequestParam, Post, Put, Query } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    UseGuards,
+    Request as RequestParam,
+    Post,
+    Put,
+    Query,
+    Body,
+    BadRequestException,
+} from '@nestjs/common';
 import { LocalAuthGuard, AuthService, JwtAuthGuard, ExchangeTokenAuthGuard } from './auth';
-import { Request } from 'express';
 import { GarageDoorService } from '../../rpi-garage-door/src';
 import { ImagesService } from './services';
+import { IGarageDoorStatus, UPDATE_DOOR_STATUS } from '../../shared';
+
+function parseDoorStatus(body?: Partial<IGarageDoorStatus>): IGarageDoorStatus<UPDATE_DOOR_STATUS> {
+    const status = body?.status;
+    if (status !== 'OPEN' && status !== 'CLOSED') {
+        throw new BadRequestException(`status must be 'OPEN' or 'CLOSED'`);
+    }
+    return { status };
+}
 
 @Controller('api')
 export class AppController {
@@ -35,14 +53,14 @@ export class AppController {
 
     @Put('/garage/door')
     @UseGuards(JwtAuthGuard)
-    controlDoor(@RequestParam() req: Request) {
-        return this.garageDoorService.setState(req.body);
+    controlDoor(@Body() body?: Partial<IGarageDoorStatus>) {
+        return this.garageDoorService.setState(parseDoorStatus(body));
     }
 
     @Put('login/door')
     @UseGuards(LocalAuthGuard)
-    loginControlDoor(@RequestParam() req: Request) {
-        return this.garageDoorService.setState(req.body);
+    loginControlDoor(@Body() body?: Partial<IGarageDoorStatus>) {
+        return this.garageDoorService.setState(parseDoorStatus(body));
     }
 
     @UseGuards(LocalAuthGuard)
