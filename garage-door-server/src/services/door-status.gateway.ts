@@ -29,6 +29,7 @@ export class DoorStatusGateway implements OnGatewayConnection, OnGatewayDisconne
 
         if (tokenValid == null) {
             socket.disconnect(true);
+            return;
         }
 
         this.clients[socket.id] = socket;
