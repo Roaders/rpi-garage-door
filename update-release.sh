@@ -1,31 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
 
-curl -s -L https://github.com/Roaders/rpi-garage-door/releases/latest -o latestRelease.html
+WORK_DIR="$(mktemp -d)"
+trap 'rm -rf "$WORK_DIR"' EXIT
 
-PARTIAL="$(grep -o '\/Roaders\/rpi-garage-door\/releases\/download.*\.tgz' ./latestRelease.html)"
-FULL="https://github.com$PARTIAL"
+echo "Finding latest release..."
 
-echo "Downloading latest release $PARTIAL"
+URL="$(curl -fsSL https://api.github.com/repos/Roaders/rpi-garage-door/releases/latest \
+    | grep -o '"browser_download_url": *"[^"]*\.tgz"' \
+    | head -n 1 \
+    | grep -o 'https://[^"]*' || true)"
 
-wget -O latestRelease.tgz $FULL
+if [ -z "$URL" ]; then
+    echo "Could not find a .tgz on the latest release. Nothing changed." >&2
+    exit 1
+fi
+
+echo "Downloading $URL"
+
+curl -fL -o "$WORK_DIR/release.tgz" "$URL"
+tar -tzf "$WORK_DIR/release.tgz" > /dev/null
 
 echo "Stopping garage-door"
 
 sudo systemctl stop garage-door
+# From here on, always try to start the service again, even if a later step fails
+trap 'echo "Starting garage-door"; sudo systemctl start garage-door; rm -rf "$WORK_DIR"' EXIT
 
 echo "Extracting tar..."
 
-tar -zxvf latestRelease.tgz --strip-components=1
+tar -zxf "$WORK_DIR/release.tgz" --strip-components=1
 
 echo "Rebuilding epoll"
 
 npm rebuild epoll
 
-echo "Cleaning up"
-
-rm ./latestRelease.html ./latestRelease.tgz
-
-echo "Starting garage-door"
-
-sudo systemctl start garage-door
-
-echo "$PARTIAL downloaded and installed."
+echo "$(basename "$URL") installed."
