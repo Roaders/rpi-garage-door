@@ -46,7 +46,18 @@ export class AuthService {
         };
     }
 
-    private async storeRefreshToken(user: IUser): Promise<IRefreshToken> {
+    private tokensFileQueue: Promise<unknown> = Promise.resolve();
+
+    /**
+     * Logins are queued so concurrent read-modify-writes of the tokens file can't overwrite each other
+     */
+    private storeRefreshToken(user: IUser): Promise<IRefreshToken> {
+        const result = this.tokensFileQueue.then(() => this.readOrCreateRefreshToken(user));
+        this.tokensFileQueue = result.catch(() => undefined);
+        return result;
+    }
+
+    private async readOrCreateRefreshToken(user: IUser): Promise<IRefreshToken> {
         const tokensPath = join(__dirname, '../../../../', 'userTokens.json');
         let tokens: IUserToken[] = [];
 
@@ -70,7 +81,9 @@ export class AuthService {
         tokens.push({ ...user, ...refreshToken });
 
         console.log(`Writing tokens file to: '${tokensPath}'`);
-        await promises.writeFile(tokensPath, JSON.stringify(tokens, undefined, 4));
+        // write to a temp file then rename so readers never see a partially written file
+        await promises.writeFile(`${tokensPath}.tmp`, JSON.stringify(tokens, undefined, 4));
+        await promises.rename(`${tokensPath}.tmp`, tokensPath);
 
         return refreshToken;
     }
