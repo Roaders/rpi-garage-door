@@ -1,12 +1,9 @@
-import chalk from 'chalk';
-
-if (process.env.jwtSecret == null) {
-    console.log(chalk.red(`WARNING: jwtSecret not defined in '.env'. Please define a secret.`));
-    console.log(chalk.red(`NOT SAFE FOR PRODUCTION`));
+if (!process.env.jwtSecret) {
+    throw new Error(`jwtSecret not defined in '.env'. Run 'npm run generate-secret' to create one.`);
 }
 
 export const jwtConstants = {
-    secret: process.env.jwtSecret || 'secretKey',
+    secret: process.env.jwtSecret,
     tokenExpiry: '5m',
     refreshExpiry: '14 days',
 };
