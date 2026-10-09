@@ -1,0 +1,29 @@
+version: 2
+updates:
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+          interval: weekly
+
+    # open-pull-requests-limit: 0 turns off version update PRs but keeps security update PRs.
+    # Version updates would fail until the framework upgrade (Node, Nest, Angular, TypeScript) is done.
+    - package-ecosystem: npm
+      directory: /
+      schedule:
+          interval: weekly
+      open-pull-requests-limit: 0
+    - package-ecosystem: npm
+      directory: /garage-door-server
+      schedule:
+          interval: weekly
+      open-pull-requests-limit: 0
+    - package-ecosystem: npm
+      directory: /rpi-garage-door
+      schedule:
+          interval: weekly
+      open-pull-requests-limit: 0
+    - package-ecosystem: npm
+      directory: /node-red-contrib-garage-door
+      schedule:
+          interval: weekly
+      open-pull-requests-limit: 0

@@ -6,21 +6,26 @@ import { IUserAuth, IUser, IUserToken } from '../../../shared';
 
 @Injectable()
 export class UsersService {
+    private usersCache: { mtimeMs: number; users: IUserAuth[] } | undefined;
+
     public async findOne(username: string): Promise<IUserAuth | undefined> {
         const usersPath = join(__dirname, '../../../../', 'users.json');
 
-        let users: IUserAuth[];
-
-        if (existsSync(usersPath)) {
-            console.log(`Loading users from '${usersPath}'`);
-
-            users = JSON.parse((await promises.readFile(usersPath)).toString());
-        } else {
+        if (!existsSync(usersPath)) {
             console.log(chalk.red(`Users file not found. Exiting.`));
             return;
         }
 
-        return users.filter((user) => user.username === username)[0];
+        // only re-read the file when it changes (e.g. after npm run create-user)
+        const { mtimeMs } = await promises.stat(usersPath);
+        if (this.usersCache?.mtimeMs !== mtimeMs) {
+            console.log(`Loading users from '${usersPath}'`);
+
+            const users: IUserAuth[] = JSON.parse((await promises.readFile(usersPath)).toString());
+            this.usersCache = { mtimeMs, users };
+        }
+
+        return this.usersCache.users.filter((user) => user.username === username)[0];
     }
 
     public async findFromRefreshToken(refreshToken: string): Promise<IUser | undefined> {
