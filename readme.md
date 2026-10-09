@@ -59,6 +59,8 @@ npm run check-user
 npm run generate-secret
 ```
 
+This is required: the server will not start without a `jwtSecret` in `.env`.
+
 ### Run server (not as a service)
 
 ```
