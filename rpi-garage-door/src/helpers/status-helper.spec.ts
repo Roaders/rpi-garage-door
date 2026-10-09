@@ -1,4 +1,4 @@
-import { DOOR_STATUS } from '../contracts';
+import { DOOR_STATUS } from '../../../shared';
 import { getStatus } from './status-helper';
 
 interface IDoorStatusTest {
